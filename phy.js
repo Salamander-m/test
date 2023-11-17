@@ -25,9 +25,11 @@ let sphere = world.add(sphereConfig);
 
 const updatePosition = (obj) => {
     const position = sphere.getPosition();
-    sphere.position.z += 0.1;
+    sphere.position.z += 0.3;
     // if out of height
-    if (position.y < -40) {
+    if (position.y < -30.5 || position.y > 75) {
+        sphere.linearVelocity.set(0, 0, 0); // stop sphere
+        sphere.angularVelocity.set(0, 0, 0);      
         // Remove the sphere from the world
         world.remove(sphere);
 
@@ -35,7 +37,7 @@ const updatePosition = (obj) => {
         const newBodyConfig = {
             type: 'sphere',
             size: [3, 3, 3],
-            pos: [0, 35, 0],  // New initial position
+            pos: [0, 10, 0],  // New initial position
             move: true, // allow movement
             density: 0.1, // density of the object
             friction: 0.2, // friction
@@ -59,6 +61,11 @@ const updateSphereRotation = (obj) => {
     return rotation;
 }
 
+const getSphereRotation = () => {
+    let rotation = sphere.getQuaternion();
+    return rotation;
+}
+
 const sphereJump = (obj) => {
     console.log("JUMP")
     const position = new OIMO.Vec3(0, 0, 0);
@@ -72,4 +79,4 @@ const updatePhysics = () => {
     world.step();
 }
 
-export { world, sphereConfig, updatePosition, updateSphereRotation, updatePhysics, sphereJump };
+export { world, sphereConfig, updatePosition, updateSphereRotation, updatePhysics, sphereJump, getSphereRotation };

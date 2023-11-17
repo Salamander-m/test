@@ -10,7 +10,7 @@ const scene = new THREE.Scene();
 const gradientTexture = new THREE.TextureLoader().load("vivid-blurred-colorful-background.jpg");
 scene.background = gradientTexture;
 
-// Sphere 2
+// Sphere
 const sizeSPHERE = PHY.sphereConfig.size;
 const geometry2 = new THREE.SphereGeometry(sizeSPHERE[0]);
 const material2 = new THREE.MeshStandardMaterial({
@@ -21,6 +21,26 @@ const material2 = new THREE.MeshStandardMaterial({
 const sphere = new THREE.Mesh(geometry2, material2);
 sphere.position.set(10, 0, 0);
 scene.add(sphere);
+
+// GROUND
+const GROUNDgeometry = new THREE.BoxGeometry(30, 30, 300);
+const GROUNDmaterial = new THREE.MeshStandardMaterial({
+    color: '#00ffff',
+    roughness: 0.1
+})
+const GROUND = new THREE.Mesh(GROUNDgeometry, GROUNDmaterial);
+GROUND.position.set(0, -50, 0);
+scene.add(GROUND);
+
+// SKY
+const SKYgeometry = new THREE.BoxGeometry(30, 30, 300);
+const SKYmaterial = new THREE.MeshStandardMaterial({
+    color: '#00ffff',
+    roughness: 0.1
+})
+const SKY = new THREE.Mesh(GROUNDgeometry, GROUNDmaterial);
+SKY.position.set(0, 100, 0);
+scene.add(SKY);
 
 // Sizes
 const sizes = {
@@ -43,8 +63,8 @@ const camera = new THREE.PerspectiveCamera(
     0.1, 
     1000
 );
-camera.position.z = -40;
-camera.position.x = -40;
+camera.position.z = -140;
+camera.position.x = -140;
 camera.position.y = 0;
 scene.add(camera);
 
@@ -58,7 +78,7 @@ renderer.render(scene, camera);
 // Controls
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
-controls.enableRotate = true;
+controls.enableRotate = false;
 controls.enablePan = false;
 controls.enableZoom = false;
 // controls.autoRotate = true;
@@ -88,7 +108,7 @@ loader.load('bird.gltf', (gltf) => {
     });
 
     gltf.scene.scale.set(2, 2, 2);
-    gltf.scene.position.set(10, 10, 10);
+    gltf.scene.position.set(0, -10, 0);
     scene.add(gltf.scene);
     loadedGLTF = gltf;
 });
@@ -105,21 +125,39 @@ window.addEventListener('mousedown', () => {
     mouseDown = true; // for mouse move
     if (loadedGLTF) {
         PHY.sphereJump(loadedGLTF.scene); // jump
+        loadedGLTF.scene.traverse(child => {
+            if (child.name == 'leftWind' || child.name == 'rightWind') {
+                const pos = PHY.getSphereRotation();
+                child.quaternion.set(pos.x, pos.y, pos.z, pos.w);
+            }
+        })
+    }
+})
+window.addEventListener('keydown', (e) => {
+    if (e.key == ' ' || e.key == 'ArrowUp') {
+        if (loadedGLTF) {
+            PHY.sphereJump(loadedGLTF.scene); // jump
+        }
     }
 })
 window.addEventListener('mouseup', () => { mouseDown = false; })
-
-window.addEventListener('mousemove', (e) => {
-})
 
 const loop = () => {
     controls.update();
     PHY.updatePhysics();
     if (loadedGLTF) {
         PHY.updatePosition(loadedGLTF.scene);
-        PHY.updateSphereRotation(loadedGLTF.scene);
-        controls.target.set(loadedGLTF.scene.position.x, loadedGLTF.scene.position.y, loadedGLTF.scene.position.z);
-        camera.position.z += 0.1;
+        loadedGLTF.scene.traverse(child => {
+            if (child.name == 'leftWind' || child.name == 'rightWind') {
+                const pos = PHY.getSphereRotation();
+                child.quaternion.set(pos.x, pos.y, pos.z, pos.w);
+            }
+        })
+        // PHY.updateSphereRotation(loadedGLTF.scene);
+        controls.target.set(loadedGLTF.scene.position.x, 23, loadedGLTF.scene.position.z);
+        camera.position.z = loadedGLTF.scene.position.z;
+        GROUND.position.z = camera.position.z;
+        SKY.position.z = camera.position.z;
     }
 
     renderer.render(scene,camera);
