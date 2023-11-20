@@ -4,6 +4,8 @@ import gsap from "gsap";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as PHY from "./phy.js";
+import { Tube as Tube } from "/tube.js";
+
 // Scene
 const scene = new THREE.Scene();
 // scene.background = new THREE.Color('white');
@@ -23,7 +25,7 @@ sphere.position.set(10, 0, 0);
 scene.add(sphere);
 
 // GROUND
-const GROUNDgeometry = new THREE.BoxGeometry(30, 30, 300);
+const GROUNDgeometry = new THREE.BoxGeometry(30, 30, 600);
 const GROUNDmaterial = new THREE.MeshStandardMaterial({
     color: '#00ffff',
     roughness: 0.1
@@ -33,7 +35,7 @@ GROUND.position.set(0, -50, 0);
 scene.add(GROUND);
 
 // SKY
-const SKYgeometry = new THREE.BoxGeometry(30, 30, 300);
+const SKYgeometry = new THREE.BoxGeometry(30, 30, 600);
 const SKYmaterial = new THREE.MeshStandardMaterial({
     color: '#00ffff',
     roughness: 0.1
@@ -142,6 +144,52 @@ window.addEventListener('keydown', (e) => {
 })
 window.addEventListener('mouseup', () => { mouseDown = false; })
 
+
+
+// ------------- Инициализация игры -------------
+
+const top = 75;
+const bottom = -30;
+const height = top - bottom;
+const tunnelHeight = height * 0.4;
+
+const tubes = [];
+const initialZ = camera.position.z + 10;
+
+const createTube = () => {
+    const newTube = new Tube(scene, height, top, bottom, tunnelHeight);
+    newTube.create(camera, () => {
+        newTube.setPosition(initialZ + tubes.length * 10);
+        tubes.push(newTube);
+
+        if (tubes.length < 5) {
+            createTube(); // Рекурсивно создаем следующую трубу
+        }
+    });
+};
+
+const initializeTubes = () => {
+    createTube();
+};
+
+initializeTubes();
+
+const updateTubes = () => {
+    const firstTubeZ = tubes[0].lowerTube.position.z;
+    if (camera.position.z > firstTubeZ) {
+        const removedTube = tubes.shift();
+        removedTube.remove();
+
+        const lastTubeZ = tubes[tubes.length - 1].lowerTube.position.z; 
+        const newTubeZ = lastTubeZ + 10;
+
+        const newTube = new Tube(scene, height, top, bottom, tunnelHeight);
+        newTube.create(camera);
+        newTube.setPosition(newTubeZ);
+        tubes.push(newTube);
+    }
+}
+
 const loop = () => {
     controls.update();
     PHY.updatePhysics();
@@ -158,10 +206,10 @@ const loop = () => {
         camera.position.z = loadedGLTF.scene.position.z;
         GROUND.position.z = camera.position.z;
         SKY.position.z = camera.position.z;
+        updateTubes();
     }
 
     renderer.render(scene,camera);
     window.requestAnimationFrame(loop);
 }
 loop();
-
