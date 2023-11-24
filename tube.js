@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-
 export class Tube {
     constructor(scene, height, top, bottom, tunnelHeight) {
         this.scene = scene;
@@ -57,13 +56,17 @@ export class Tube {
         }
     }
 
-    setPosition(coordinateZ) {
+    setPositionZ(coordinateZ) {
         if (this.lowerTube) {
             this.lowerTube.position.z = coordinateZ;
         }
         if (this.upperTube) {
             this.upperTube.position.z = coordinateZ;
         }
+    }
+
+    getPosition() {
+        return(this.lowerTube.position);
     }
 }
 

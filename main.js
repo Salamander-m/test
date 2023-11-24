@@ -4,7 +4,7 @@ import gsap from "gsap";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as PHY from "./phy.js";
-import { Tube as Tube } from "/tube.js";
+import { Tube } from "/tube.js";
 
 // Scene
 const scene = new THREE.Scene();
@@ -127,12 +127,6 @@ window.addEventListener('mousedown', () => {
     mouseDown = true; // for mouse move
     if (loadedGLTF) {
         PHY.sphereJump(loadedGLTF.scene); // jump
-        loadedGLTF.scene.traverse(child => {
-            if (child.name == 'leftWind' || child.name == 'rightWind') {
-                const pos = PHY.getSphereRotation();
-                child.quaternion.set(pos.x, pos.y, pos.z, pos.w);
-            }
-        })
     }
 })
 window.addEventListener('keydown', (e) => {
@@ -158,14 +152,10 @@ const initialZ = camera.position.z + 10;
 
 const createTube = () => {
     const newTube = new Tube(scene, height, top, bottom, tunnelHeight);
-    newTube.create(camera, () => {
-        newTube.setPosition(initialZ + tubes.length * 10);
-        tubes.push(newTube);
-
-        if (tubes.length < 5) {
-            createTube(); // Рекурсивно создаем следующую трубу
-        }
-    });
+    newTube.create(camera);
+    // newTube.setPosition(new OIMO.Vec3(newTube.position.x, newTube.position.y, initialZ + tubes.length * 10));
+    tubes.push(newTube);
+    console.log(tubes.length);
 };
 
 const initializeTubes = () => {
@@ -175,38 +165,27 @@ const initializeTubes = () => {
 initializeTubes();
 
 const updateTubes = () => {
-    const firstTubeZ = tubes[0].lowerTube.position.z;
-    if (camera.position.z > firstTubeZ) {
-        const removedTube = tubes.shift();
-        removedTube.remove();
-
-        const lastTubeZ = tubes[tubes.length - 1].lowerTube.position.z; 
-        const newTubeZ = lastTubeZ + 10;
-
-        const newTube = new Tube(scene, height, top, bottom, tunnelHeight);
-        newTube.create(camera);
-        newTube.setPosition(newTubeZ);
-        tubes.push(newTube);
-    }
+    createTube();
 }
+
+setInterval(() => updateTubes(), 3000);
 
 const loop = () => {
     controls.update();
     PHY.updatePhysics();
     if (loadedGLTF) {
         PHY.updatePosition(loadedGLTF.scene);
-        loadedGLTF.scene.traverse(child => {
-            if (child.name == 'leftWind' || child.name == 'rightWind') {
-                const pos = PHY.getSphereRotation();
-                child.quaternion.set(pos.x, pos.y, pos.z, pos.w);
-            }
-        })
+        // loadedGLTF.scene.traverse(child => {
+        //     if (child.name == 'leftWind' || child.name == 'rightWind') {
+        //         const pos = PHY.getSphereRotation();
+        //         child.quaternion.set(pos.x, pos.y, pos.z, pos.w);
+        //     }
+        // })
         // PHY.updateSphereRotation(loadedGLTF.scene);
         controls.target.set(loadedGLTF.scene.position.x, 23, loadedGLTF.scene.position.z);
         camera.position.z = loadedGLTF.scene.position.z;
         GROUND.position.z = camera.position.z;
         SKY.position.z = camera.position.z;
-        updateTubes();
     }
 
     renderer.render(scene,camera);
